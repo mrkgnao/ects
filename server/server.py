@@ -10,7 +10,6 @@ from functools import wraps
 import time
 
 import utils
-import auth
 import credentials as cred
 
 import settings
@@ -57,14 +56,13 @@ def post_request_logging(response):
      ))
     return response
 
-def authenticate():
-    """Sends a 401 response that enables basic auth"""
-    return Response(
-    'Could not verify your access level for that URL.\n'
-    'You have to login with proper credentials', 401,
-    {'WWW-Authenticate': 'Basic realm="Login Required"'})
-
 def requires_auth(f):
+    def authenticate():
+        """Sends a 401 response that enables basic auth"""
+        return Response(
+        'Could not verify your access level for that URL.\n'
+        'You have to login with proper credentials', 401,
+        {'WWW-Authenticate': 'Basic realm="Login Required"'})
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
@@ -75,16 +73,20 @@ def requires_auth(f):
 
 def check_auth(user, pw):
     try:
-        if cred.get_pwdhash(user) == cred.kdf(str.encode(pw)):
+        if cred.authenticate(user, pw):
             app.logger.debug("Successfully authenticated user {}".format(user))
             return True
         else:
             app.logger.error("Failed login attempt for user {}".format(user))
             return False
-
     except KeyError:
-        app.logger.error("User {} not found!".format(user))
-        return False
+        if user in cred.get_users():
+            cred.set_pwdhash(user, cred.hash_kdf(pw))
+            app.logger.debug("Added password for user {}".format(user))
+            return True
+        else:
+            app.logger.error("User {} not found!".format(user))
+            return False
 
 @app.route('/')
 def home():
@@ -102,8 +104,7 @@ def upload():
 
         source_file               = upload_file.filename
         source_fname, source_fext = os.path.splitext(upload_file.filename)
-        target_fname              = (source_fname
-                + " (" + utils.current_timestamp() + ")" + source_fext)
+        target_fname              = request.content_md5 + source_fext
 
         app.logger.debug("Received file {}".format(source_file))
 
@@ -119,10 +120,12 @@ def upload():
             os.makedirs(save_dir)
 
         save_path = pjoin(save_dir, target_fname)
-
-        upload_file.save(save_path)
-        app.logger.debug("Saved to /uploads/{}".format(pjoin(uid, 
-            user_rel_upload_path, source_file, target_fname)))
+        if not os.path.exists(save_path):
+            upload_file.save(save_path)
+            app.logger.debug("Saved to /uploads/{}".format(pjoin(uid, 
+                user_rel_upload_path, source_file, target_fname)))
+        else:
+            app.logger.debug("File md5 hasn't changed, skipping")
 
         return "All done!"
     else:
@@ -132,6 +135,10 @@ def upload():
 @app.errorhandler(404)
 def error404(err):
     return Response("Not found", 404)
+
+@app.errorhandler(401)
+def error401(err):
+    return Response("Bugger off", 401)
 
 def run_app():
     app.run(host='0.0.0.0', port=8080, debug=True)
