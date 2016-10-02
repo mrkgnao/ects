@@ -33,24 +33,20 @@ class Client(object):
 
     def mirror_dir_to_server(self, local_dir_path):
         """Make os.walk do the recursing!"""
-        for root, dirs, files in os.walk("."):
+        for root, dirs, files in os.walk(local_dir_path):
             # Ignore empty dirs
             if files:
                 for _file in files:
                     _rpath = os.path.relpath(root, local_dir_path)
-                    if _rpath[0] == '.':
-                        rpath = _rpath[1:]
+                    if _rpath[:2] == './':
+                        rpath = _rpath[2:]
+                        print(rpath)
                     else:
                         rpath = _rpath
-                    t2 = time.time()
                     s = "Uploaded {}".format(pjoin(rpath, _file)) 
-                    self.upload(pjoin(rpath, _file), rpath, s)
-
-                    t2 = time.time() - t2
+                    print(s)
+                    self.upload(pjoin(local_dir_path, rpath, _file), rpath, s)
 
 if __name__ == '__main__':
     client = Client()
-    try:
-        client.mirror_dir_to_server(sys.argv[1])
-    except IndexError:
-        client.mirror_dir_to_server(os.getcwd())
+    client.mirror_dir_to_server(sys.argv[1])
