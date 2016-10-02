@@ -1,4 +1,4 @@
-from flask import Flask, request, Response
+from flask import Flask, request, Response, g
 
 import os
 import os.path
@@ -21,9 +21,13 @@ from custom_logging import Logging
 
 app                                    = Flask(__name__)
 logging.getLogger("werkzeug").handlers = []
-logging.getLogger("werkzeug").setLevel(logging.CRITICAL)
-app.logger.handlers                    = []
+
+# CRITICAL is 50.
+# This kills the logger.
+logging.getLogger("werkzeug").setLevel(100) 
 app.logger.setLevel(logging.DEBUG)
+
+app.logger.handlers                    = []
 logger                                 = Logging(app)
 UPLOAD_DIR                             = pjoin(os.getcwd(), "uploads")
 app.config['FLASK_LOG_LEVEL']          = 'INFO'
@@ -31,6 +35,10 @@ app.config['FLASK_LOG_LEVEL']          = 'INFO'
 def get_basic_auth_creds():
     return (request.authorization.username,
             request.authorization.password)
+
+@app.before_request
+def pre_request():
+    g.start = time.clock()
 
 @app.after_request
 def post_request_logging(response):
@@ -40,12 +48,12 @@ def post_request_logging(response):
     else:
         f = app.logger.error
 
-    f('{} {} {} {}'.format(
+    f('{} {} {} {} ({} ms)'.format(
         request.remote_addr,
         request.method,
         request.url,
         response.status,
-        str(request.data)
+        int(1000 * (time.clock() - g.start))
      ))
     return response
 
@@ -126,7 +134,7 @@ def error404(err):
     return Response("Not found", 404)
 
 def run_app():
-    app.run(host='localhost', port=8080, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=True)
 
 if __name__ == '__main__':
     app.logger.info("Restarting server")

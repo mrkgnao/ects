@@ -41,4 +41,7 @@ class Client(object):
 
 if __name__ == '__main__':
     client = Client()
-    client.mirror_dir_to_server(os.getcwd())
+    try:
+        client.mirror_dir_to_server(sys.argv[1])
+    except Exception:
+        client.mirror_dir_to_server(os.getcwd())
