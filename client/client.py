@@ -1,35 +1,39 @@
+#!/usr/bin/env python
 import requests
 import os
 import settings
 import sys
 import hashlib
-import time
-import getpass
 import os.path
 from os.path import join as pjoin
 
-class Client(object):
-    def __init__(self):
-        self.uid = input("Enter user id: ")
-        self.pwd = getpass.getpass("Enter password for user {}: ".format(self.uid))
 
+class Client(object):
+    def __init__(self, uid, pwd):
+        self.uid = uid
+        self.pwd = pwd
 
     def upload(self, file_to_upload, file_path, s=""):
-        files    = {settings.FILE_UPLOAD_FIELD_NAME : open(file_to_upload, 'rb')}
-        data     = {"path": file_path}
+        files = {settings.FILE_UPLOAD_FIELD_NAME: open(file_to_upload, 'rb')}
+        data = {"path": file_path}
         md5_hash = hashlib.md5(open(file_to_upload, 'rb').read()).hexdigest()
 
         headers = {'Content-MD5': md5_hash}
-        
+
         try:
-            r = requests.post(settings.SERVER_UPLOAD_URL, headers=headers,
-                files=files, data=data, auth=(self.uid, self.pwd))
+            r = requests.post(
+                settings.SERVER_UPLOAD_URL,
+                headers=headers,
+                files=files,
+                data=data,
+                auth=(self.uid, self.pwd))
             if r.status_code == 200:
                 print(s)
             else:
                 print("Code {}".format(r.status_code))
         except requests.exceptions.ConnectionError:
-            print("Remote connection forcibly closed, were your credentials okay?")
+            print("Remote connection forcibly closed, "
+                  "were your credentials okay?")
 
     def mirror_dir_to_server(self, local_dir_path):
         """Make os.walk do the recursing!"""
@@ -41,11 +45,14 @@ class Client(object):
                     if _rpath[:2] == './':
                         rpath = _rpath[2:]
                         print(rpath)
+                    elif _rpath == ".":
+                        rpath = ""
                     else:
                         rpath = _rpath
-                    s = "Uploaded {}".format(pjoin(rpath, _file)) 
-                    print(s)
+                        print(rpath)
+                    s = "Uploaded {}".format(pjoin(rpath, _file))
                     self.upload(pjoin(local_dir_path, rpath, _file), rpath, s)
+
 
 if __name__ == '__main__':
     client = Client()
