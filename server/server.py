@@ -132,7 +132,6 @@ def upload():
         return Response("You must have a valid login to upload files.\n" \
                         "Please contact the system administrator.", 401)
 
-
 @app.errorhandler(404)
 def error404(err):
     return Response("Not found", 404)

@@ -1,7 +1,10 @@
+#!/usr/bin/env python
 from tkinter import Button, Label, Entry, Tk, messagebox
 from tkinter.filedialog import askdirectory
+from threading import Thread
 
 from client import Client
+
 
 class FileChooserDialog(object):
     def __init__(self):
@@ -15,6 +18,9 @@ class FileChooserDialog(object):
             self.upload_folder = askdirectory(title="Choose a file.")
         except:
             print("No file exists")
+
+    def set_info_label(self, s):
+        self.info_label.config(text=s)
 
     def quit_dialog(self):
         self.username = self.username_input.get()
@@ -30,18 +36,24 @@ class FileChooserDialog(object):
             messagebox.showinfo("Error", "Please enter a folder to upload.")
 
         else:
-            self.client = Client(uid=self.username, pwd=self.password)
-            self.client.mirror_dir_to_server(self.upload_folder)
-            self.root.destroy()
+            self.client = Client(
+                uid=self.username, pwd=self.password, parent_dialog=self)
+            Thread(
+                target=lambda: self.client.mirror_dir_to_server(
+                    self.upload_folder)
+            ).start()
 
     def run_dialog(self):
         self.root.title("ects")
+        self.root.geometry("200x150")
 
         # Creating the username & password entry boxes
         username_text = Label(self.root, text="Username")
         self.username_input = Entry(self.root)
         password_text = Label(self.root, text="Password")
         self.password_input = Entry(self.root, show="*")
+
+        self.info_label = Label(self.root, text="")
 
         upload_folder_btn = Button(
             text="Upload folder", command=self.quit_dialog)
@@ -55,6 +67,8 @@ class FileChooserDialog(object):
         upload_folder_btn.pack()
         choose_file_btn.pack()
 
+        self.info_label.pack()
+
         self.root.mainloop()
 
         return {
@@ -62,3 +76,7 @@ class FileChooserDialog(object):
             "password": self.password,
             "upload_folder": self.upload_folder
         }
+
+if __name__ == '__main__':
+    f = FileChooserDialog()
+    f.run_dialog()
