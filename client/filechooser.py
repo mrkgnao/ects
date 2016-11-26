@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from tkinter import Button, Label, Entry, Tk, messagebox
+from tkinter import Button, Label, Entry, Tk, messagebox, Scrollbar, RIGHT, LEFT, Text, Y, END
 from tkinter.filedialog import askdirectory
 from threading import Thread
 
@@ -20,7 +20,7 @@ class FileChooserDialog(object):
             print("No file exists")
 
     def set_info_label(self, s):
-        self.info_label.config(text=s)
+        self.T.insert(END, s + "\n")
 
     def quit_dialog(self):
         self.username = self.username_input.get()
@@ -38,14 +38,14 @@ class FileChooserDialog(object):
         else:
             self.client = Client(
                 uid=self.username, pwd=self.password, parent_dialog=self)
-            Thread(
-                target=lambda: self.client.mirror_dir_to_server(
-                    self.upload_folder)
-            ).start()
+            self.client_thread = Thread(
+                target=lambda: self.client.mirror_dir_to_server(self.upload_folder)
+            )
+            self.client_thread.start()
 
     def run_dialog(self):
         self.root.title("ects")
-        self.root.geometry("200x150")
+        self.root.geometry("500x250")
 
         # Creating the username & password entry boxes
         username_text = Label(self.root, text="Username")
@@ -67,7 +67,12 @@ class FileChooserDialog(object):
         upload_folder_btn.pack()
         choose_file_btn.pack()
 
-        self.info_label.pack()
+        S = Scrollbar(self.root)
+        self.T = Text(self.root, width=50)
+        S.pack(side=RIGHT, fill=Y)
+        self.T.pack(fill=Y)
+        S.config(command=self.T.yview)
+        self.T.config(yscrollcommand=S.set)
 
         self.root.mainloop()
 
@@ -76,6 +81,7 @@ class FileChooserDialog(object):
             "password": self.password,
             "upload_folder": self.upload_folder
         }
+
 
 if __name__ == '__main__':
     f = FileChooserDialog()
