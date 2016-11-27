@@ -50,6 +50,10 @@ class Client(object):
             if files:
                 for _file in files:
                     _rpath = os.path.relpath(root, local_dir_path)
+                    _fname = os.path.relpath(
+                        local_dir_path,
+                        os.path.abspath(
+                            os.path.join(local_dir_path, os.pardir)))
                     if _rpath[:2] == './':
                         rpath = _rpath[2:]
                     elif _rpath == ".":
@@ -59,7 +63,9 @@ class Client(object):
                     s = "uploaded {} ({} of {})".format(
                         pjoin(rpath, _file), count, total_num_files)
                     count += 1
-                    self.upload(pjoin(local_dir_path, rpath, _file), rpath, s)
+                    self.upload(
+                        pjoin(local_dir_path, rpath, _file),
+                        pjoin(_fname, rpath), s)
 
     def _print(self, s):
         self.parent_dialog.set_info_label(s)

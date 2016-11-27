@@ -21,6 +21,7 @@ class FileChooserDialog(object):
 
     def set_info_label(self, s):
         self.T.insert(END, s + "\n")
+        self.T.see("end")
 
     def quit_dialog(self):
         self.username = self.username_input.get()
