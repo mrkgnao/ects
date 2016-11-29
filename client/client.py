@@ -44,6 +44,7 @@ class Client(object):
         """Make os.walk do the recursing!"""
         total_num_files = sum(
             len(files) for _, _, files in os.walk(local_dir_path))
+        self._set_pb_max(total_num_files - 1)
         count = 1
         for root, dirs, files in os.walk(local_dir_path):
             # Ignore empty dirs
@@ -60,6 +61,7 @@ class Client(object):
                         rpath = ""
                     else:
                         rpath = _rpath
+                    self._set_pb_amt(count-1)
                     s = "uploaded {} ({} of {})".format(
                         pjoin(rpath, _file), count, total_num_files)
                     count += 1
@@ -69,6 +71,12 @@ class Client(object):
 
     def _print(self, s):
         self.parent_dialog.set_info_label(s)
+
+    def _set_pb_max(self, amt):
+        self.parent_dialog.set_progressbar_max(amt)
+
+    def _set_pb_amt(self, amt):
+        self.parent_dialog.set_progressbar_amt(amt)
 
 
 if __name__ == '__main__':
