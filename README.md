@@ -6,9 +6,13 @@ ects
 A write-only, versioned-by-default file backup system.
 (I like the sound of buzzwords in the morning.)
 
-This is for a school computer lab setting, where students need to back their work up to a central server for grading and the like as well as for simple redundant backup purposes, considering that multiple students share a user on the computer and sometimes ... things ... happen to people's files.
+This is for a high-school computer lab setting, where students need to back their work up to a central server for grading and the like as well as for simple redundant backup purposes, considering that multiple students share a user on the computer and sometimes ... things ... happen to people's files.
 
-## What does it do?
+## How does it work?
+
+The server is a Flask instance with a single `POST` endpoint at `/uploads`, which the clients upload files to using `requests` (and HTTP Basic Auth because why not). Username-hashed password pairs are stored in a JSON file on the server. 
+
+A list of approved usernames is present in `db.json`, and if a user with an approved username connects for the first time, the password they choose is recorded and used from then onward. Of course, this is a suboptimal state of affairs. A quick hack I'll try to implement is to check the IP of the user connecting and vet the username based on that. Password resets can be done with a quick `ipython` session for now, using the awesome `json` module Python ships with.
 
 If a folder is backed up, every file of the form `folder/path/to/file.ext` is backed up to `uploads/username/folder/path/to/file.ext/hash.ext` on the server, where `hash` is the `sha256` hash of the file contents.
 
@@ -16,7 +20,7 @@ For instance, I created a few folders and some empty Word files in Documents on 
 
 `Documents/New Folder/New Microsoft Word Document - Copy (13).docx -> uploads/asdf/Documents/New folder/New Microsoft Word Document - Copy (13).docx/d41d8cd98f00b204e9800998ecf8427e.docx`
 
-If the file is changed, a new file is created in `/folder/path/to/file/newhash.txt` where `newhash` is, predictably, the new hash of the file.
+If the file is changed, a new file is created in `folder/path/to/file/newhash.txt` where `newhash` is, predictably, the new hash of the file.
 
 ## How do I set it up?
 
@@ -32,7 +36,6 @@ Install the following `pip` packages:
 This is done with the following incantation:
 
 `> pip install flask coloredlogs`
-
 Now navigate to the `ects/server` directory and run
 
 `> python server.py`
