@@ -2,6 +2,7 @@ from hashlib import pbkdf2_hmac
 import codecs
 import json
 import settings
+import os
 
 
 def hash_kdf(pw):
@@ -10,24 +11,33 @@ def hash_kdf(pw):
         'hex').decode('utf-8')
 
 
+DB_PATH = os.path.join(os.getcwd(), "db.json")
+
+
 class CredentialManager(object):
     def __init__(self, logger=None):
         self.logger = logger
-        if self.logger:
-            self.logger.debug("Starting credential manager module")
+        self.logger.debug("Starting credential manager module")
         self.db = dict()
         self.update_db()
 
     def update_db(self):
-        with open("db.json") as _file:
-            db_ = json.load(_file)
-            if db_ != self.db:
-                if self.logger:
-                    self.logger.debug("Updating database")
-                self.db = db_
+        try:
+            with open(DB_PATH) as _file:
+                db_ = json.load(_file)
+                if db_ != self.db:
+                    if self.logger:
+                        self.logger.debug("Updating database")
+                    self.db = db_
+        except FileNotFoundError:
+            self.logger.debug("Database not found, creating a new one.")
+            # Create the database.
+            self.db['users'] = []
+            self.db['hashes'] = dict()
+            self.persist_db_to_file()
 
     def persist_db_to_file(self):
-        with open("db.json", "w") as _file:
+        with open(DB_PATH, "w") as _file:
             json.dump(self.db, _file)
 
     def get_pwdhash(self, user):

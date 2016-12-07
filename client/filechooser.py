@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from tkinter import Button, Label, Entry, Tk, messagebox, Scrollbar, RIGHT, Y, END, Text
-from tkinter.ttk import Progressbar
+from tkinter import Button, Label, Entry, Tk, messagebox, Scrollbar, RIGHT, Y, END, Text, X, W, E, N, S
+from tkinter.ttk import Progressbar, LabelFrame, Frame
 from tkinter.filedialog import askdirectory
 from threading import Thread
 
@@ -23,13 +23,20 @@ class FileChooserDialog(Tk):
 
         self.grid()
         self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(2, weight=1)
 
     def open_file(self):
-        try:
-            self.upload_folder = askdirectory(title="Choose a file.")
-        except:
-            print("No file exists")
+        self.upload_folder = askdirectory(title="Choose a folder.")
+        self.set_folder_label(self.upload_folder)
+
+    def set_folder_label(self, s):
+        if s == "":
+            self.folder_label["text"] = "No folder selected"
+        else:
+            self.folder_label["text"] = "Currently selected: " + s
 
     def set_info_label(self, s):
         self.info_label["text"] = s
@@ -77,58 +84,116 @@ class FileChooserDialog(Tk):
             self.client_thread.start()
 
     def run_dialog(self):
-        self.title("Writing GUIs is hard, okay?")
+        self.title("Backup Management System")
         # self.geometry("500x250")
 
-        server_ip_text = Label(self, text="Server IP", anchor="e")
-        self.server_ip_input = Entry(self)
+        self.server_frame = LabelFrame(self, text="Server options")
+        self.server_frame.grid(column=0, row=0, padx=10, pady=10)
+
+        self.server_ip_text = Label(
+            self.server_frame, text="Server IP", anchor="e")
+        self.server_ip_text.grid(column=0, row=0, padx=5, pady=5)
+
+        self.server_ip_input = Entry(self.server_frame)
         self.server_ip_input.insert(END, settings.SERVER_IP)
+        self.server_ip_input.grid(column=1, row=0, padx=5, pady=5)
 
-        server_ip_text.grid(column=0, row=0)
-        self.server_ip_input.grid(column=1, row=0)
+        self.server_port_text = Label(
+            self.server_frame, text="Port", anchor="e")
+        self.server_port_text.grid(column=0, row=1, padx=5, pady=5)
 
-        server_port_text = Label(self, text="Port", anchor="e")
-        self.server_port_input = Entry(self)
+        self.server_port_input = Entry(self.server_frame)
         self.server_port_input.insert(END, settings.SERVER_PORT)
+        self.server_port_input.grid(column=1, row=1, padx=5, pady=5)
 
-        server_port_text.grid(column=0, row=1)
-        self.server_port_input.grid(column=1, row=1)
+        self.server_info = Label(
+            self.server_frame,
+            text=("Please do not change this information unless asked to.\n"
+                  "Doing so may lead to inability to back up your work."))
+        self.server_info.grid(column=0, row=2, columnspan=2, padx=5, pady=5)
 
         # Creating the username & password entry boxes
-        username_text = Label(self, text="Username", anchor="e")
-        self.username_input = Entry(self)
 
-        username_text.grid(column=0, row=2)
-        self.username_input.grid(column=1, row=2)
+        self.creds_frame = LabelFrame(self, text="Login credentials")
+        self.creds_frame.grid(column=1, row=0, padx=10, pady=10)
 
-        password_text = Label(self, text="Password", anchor="e")
-        self.password_input = Entry(self, show="*")
-        password_text.grid(column=0, row=3)
-        self.password_input.grid(column=1, row=3)
+        self.username_text = Label(
+            self.creds_frame, text="Username", anchor="e")
+        self.username_input = Entry(self.creds_frame)
 
-        upload_folder_btn = Button(
-            text="Upload folder", command=self.quit_dialog)
-        choose_file_btn = Button(
-            text="Choose folder", command=self.open_file)
-        upload_folder_btn.grid(column=1, row=4)
-        choose_file_btn.grid(column=0, row=4)
+        self.username_text.grid(column=0, row=0, padx=5, pady=5)
+        self.username_input.grid(column=1, row=0, padx=5, pady=5)
+
+        self.password_text = Label(
+            self.creds_frame, text="Password", anchor="e")
+        self.password_input = Entry(self.creds_frame, show="*")
+
+        self.password_text.grid(column=0, row=1, padx=5, pady=5)
+        self.password_input.grid(column=1, row=1, padx=5, pady=5)
+
+        self.creds_info = Label(
+            self.creds_frame,
+            text=("The password used on first login is stored permanently.\n"
+                  "Do not forget your password."))
+        self.creds_info.grid(column=0, row=2, columnspan=2, padx=5, pady=5)
+
+        # ----------------
+        # Upload buttons
+        # ----------------
+
+        self.btn_frame = LabelFrame(self, text="Select folder")
+        self.btn_frame.grid(
+            column=0, row=1, columnspan=2, padx=10, pady=10, sticky=E + W)
+
+        self.btn_frame.grid_columnconfigure(0, weight=1, pad=5)
+        self.btn_frame.grid_columnconfigure(2, pad=5)
+        self.btn_frame.grid_rowconfigure(0, pad=10)
+
+        self.folder_label = Label(self.btn_frame)
+        self.folder_label.grid(row=0, padx=5, pady=5, sticky=E + W)
+        self.set_folder_label("")
+
+        self.choose_file_btn = Button(
+            self.btn_frame,
+            text="Choose folder to upload",
+            command=self.open_file)
+        self.choose_file_btn.grid(column=1, row=0)
+
+        self.upload_folder_btn = Button(
+            self.btn_frame, text="Start upload", command=self.quit_dialog)
+        self.upload_folder_btn.grid(column=2, row=0)
+
+        # --------------------------
+        # Upload frame
+        # --------------------------
+
+        self.upload_frame = LabelFrame(self, text="Upload progress")
+        self.upload_frame.grid(
+            column=0, row=2, columnspan=2, padx=10, pady=10, sticky=E + W)
+        self.upload_frame.grid_columnconfigure(0, weight=1)
 
         self.progressbar = Progressbar(
-            self, orient='horizontal', mode='determinate')
-        self.progressbar.grid(column=0, row=5, columnspan=2)
+            self.upload_frame, orient='horizontal', mode='determinate')
+        self.progressbar.grid(row=0, padx=5, pady=5, sticky=E + W)
 
-        self.info_label = Label(self, text="", anchor="e")
-        self.info_label.grid(column=0, row=6, columnspan=2)
+        self.info_label = Label(
+            self.upload_frame,
+            text="When you upload a folder, upload progress will be shown here."
+        )
+        self.info_label.grid(row=1, padx=5, pady=5, sticky=E + W)
 
         self.mainloop()
 
-        return {
-            "username": self.username,
-            "password": self.password,
-            "upload_folder": self.upload_folder,
-            "ip": self.server_ip,
-            "port": self.server_port
-        }
+        try:
+            return {
+                "username": self.username,
+                "password": self.password,
+                "upload_folder": self.upload_folder,
+                "ip": self.server_ip,
+                "port": self.server_port
+            }
+        except AttributeError:
+            return None
 
 
 if __name__ == '__main__':

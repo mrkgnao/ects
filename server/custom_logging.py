@@ -10,7 +10,7 @@ from coloredlogs import ColoredFormatter
 
 DATE_FORMAT = '%H:%M:%S'
 
-LOG_FORMAT_PRE = '%(asctime)s.%(msecs).03d'
+LOG_FORMAT_PRE = '%(levelname)8s %(asctime)s.%(msecs).03d'
 LOG_FORMAT_POST = '%(message)s'
 LOG_FORMAT = LOG_FORMAT_PRE + " " + LOG_FORMAT_POST
 
@@ -41,10 +41,7 @@ FIELD_STYLES = {
     'name': {
         'color': 'blue'
     },
-    'levelname': {
-        'color': 'black',
-        'bold': True
-    },
+    'levelname': {},
     'asctime': {
         'color': 'green'
     },
@@ -100,7 +97,10 @@ class Logging(object):
         app.config['FLASK_LOG_LEVEL'] setting, and defaults to
         ``None``/``logging.NOTSET``.
         """
-        config_log_level = app.config.get('FLASK_LOG_LEVEL', None)
+        try:
+            config_log_level = app.config.get('FLASK_LOG_LEVEL', None)
+        except AttributeError:
+            config_log_level = logging.NOTSET
 
         # Set up format for default logging
         hostname = platform.node().split('.')[0]

@@ -7,6 +7,7 @@ import time
 from os.path import join as pjoin
 
 import requests
+import time
 
 import settings
 
@@ -29,7 +30,6 @@ class Client(object):
         headers = {'Content-MD5': md5_hash}
 
         try:
-            t = time.clock()
             r = requests.post(
                 self.upload_url,
                 headers=headers,
@@ -38,14 +38,22 @@ class Client(object):
                 auth=(self.uid, self.pwd))
             if r.status_code == 200:
                 self._print(s)
+                return True
             else:
-                self._print("Error {}: {}".format(r.status_code, r.text))
+                self._print(
+                    "HTTP error {}: {}".format(r.status_code, r.text) +
+                )
         except requests.exceptions.ConnectionError:
-            self._print("Remote connection forcibly closed, "
-                        "were your credentials okay?")
+            self._print(
+                "Connection error. Please check your credentials."
+                "\nIf this is unexpected, please contact the system administrator."
+            )
+        return False
 
     def mirror_dir_to_server(self, local_dir_path):
         """Make os.walk do the recursing!"""
+        t = time.perf_counter()
+        no_error = True
         total_num_files = sum(
             len(files) for _, _, files in os.walk(local_dir_path))
         self._set_pb_max(total_num_files - 1)
@@ -65,13 +73,18 @@ class Client(object):
                         rpath = ""
                     else:
                         rpath = _rpath
-                    self._set_pb_amt(count-1)
+                    self._set_pb_amt(count - 1)
                     s = "uploaded {} ({} of {})".format(
                         pjoin(rpath, _file), count, total_num_files)
                     count += 1
-                    self.upload(
+                    no_error = self.upload(
                         pjoin(local_dir_path, rpath, _file),
-                        pjoin(_fname, rpath), s)
+                        pjoin(_fname, rpath), s) and no_error
+        self._set_pb_amt(0)
+        t = time.perf_counter() - t
+        if no_error:
+            self._print("Finished upload of {} file(s) in {:.2f} seconds.".
+                        format(total_num_files, t))
 
     def _print(self, s):
         if self.parent_dialog:

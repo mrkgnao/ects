@@ -101,6 +101,7 @@ def upload():
         # get the 'upload_file' field from the form
         upload_file = request.files.get(settings.FILE_UPLOAD_FIELD_NAME)
         if upload_file is not None:
+
             def rel(_path):
                 return os.path.relpath(_path, os.getcwd())
 
@@ -109,8 +110,8 @@ def upload():
             CLASS_SEC_ROLL_RE = re.compile("^(\d+)(\w)(\d+)$")
             g = CLASS_SEC_ROLL_RE.match(uid)
             if g:
-                user_dir = pjoin(UPLOAD_DIR,
-                                 g.group(1), g.group(2), g.group(3))
+                user_dir = pjoin(UPLOAD_DIR, g.group(1), g.group(2),
+                                 g.group(3))
             else:
                 user_dir = pjoin(UPLOAD_DIR, uid)
 
@@ -121,7 +122,8 @@ def upload():
             app.logger.debug("Received file {}".format(source_file))
 
             if not os.path.isdir(user_dir):
-                app.logger.warn("Created dir {} for user {}".format(rel(user_dir), uid))
+                app.logger.warn("Created dir {} for user {}".format(
+                    rel(user_dir), uid))
                 os.makedirs(user_dir)
 
             save_dir = pjoin(user_dir, user_rel_upload_path, source_file)
@@ -135,15 +137,19 @@ def upload():
                 upload_file.save(save_path)
                 app.logger.debug("Saved to {}".format(rel(save_path)))
             else:
-                app.logger.debug("File md5 hasn't changed, skipping")
+                app.logger.debug("File {} already exists".format(
+                    rel(save_path)))
 
             return "All done!"
         else:
             return Response("No file received for upload. Please try again.",
                             200)
     else:
-        return Response("You must have a valid login to upload files.\n"
-                        "Please contact the system administrator.", 401)
+        return Response(
+            "You must have a valid login to upload files.\n"
+            "Please check your username and password, "
+            "or contact the system administrator.",
+            401)
 
 
 @app.errorhandler(404)
