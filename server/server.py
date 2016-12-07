@@ -27,6 +27,8 @@ logger = Logging(app)
 UPLOAD_DIR = pjoin(os.getcwd(), "uploads")
 app.config['FLASK_LOG_LEVEL'] = 'INFO'
 
+credential_manager = cred.CredentialManager(logger=app.logger)
+
 
 def get_basic_auth_creds():
     return (request.authorization.username, request.authorization.password)
@@ -70,15 +72,15 @@ def requires_auth(f):
 
 def check_auth(user, pw):
     try:
-        if cred.authenticate(user, pw):
+        if credential_manager.authenticate(user, pw):
             app.logger.debug("Successfully authenticated user {}".format(user))
             return True
         else:
             app.logger.error("Failed login attempt for user {}".format(user))
             return False
     except KeyError:
-        if user in cred.get_users():
-            cred.set_pwdhash(user, cred.hash_kdf(pw))
+        if user in credential_manager.get_users():
+            credential_manager.set_pwdhash(user, cred.hash_kdf(pw))
             app.logger.debug("Added password for user {}".format(user))
             return True
         else:
@@ -124,7 +126,8 @@ def upload():
             if not os.path.exists(save_path):
                 upload_file.save(save_path)
                 app.logger.debug("Saved to /uploads/{}".format(
-                    pjoin(uid, user_rel_upload_path, source_file, target_fname)))
+                    pjoin(uid, user_rel_upload_path, source_file,
+                          target_fname)))
             else:
                 app.logger.debug("File md5 hasn't changed, skipping")
 
