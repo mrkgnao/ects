@@ -18,13 +18,13 @@ LEVEL_STYLES = {
     'debug': {},
     'critical': {
         'color': 'red',
-        'bold': True
     },
     'error': {
         'color': 'red'
     },
     'info': {
-        'color': 'blue'
+        'color': 'blue',
+        'bold': True
     },
     'warn': {
         'color': 'yellow'

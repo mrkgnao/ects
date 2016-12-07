@@ -25,7 +25,7 @@ app.logger.setLevel(logging.DEBUG)
 app.logger.handlers = []
 logger = Logging(app)
 UPLOAD_DIR = pjoin(os.getcwd(), "uploads")
-app.config['FLASK_LOG_LEVEL'] = 'INFO'
+app.config['FLASK_LOG_LEVEL'] = 'DEBUG'
 
 credential_manager = cred.CredentialManager(logger=app.logger)
 
@@ -133,10 +133,11 @@ def upload():
 
             return "All done!"
         else:
-            return Response("You must have a valid login to upload files.\n"
-                            "Please contact the system administrator.", 401)
+            return Response("No file received for upload. Please try again.",
+                            200)
     else:
-        return Response("No file received for upload. Please try again.", 200)
+        return Response("You must have a valid login to upload files.\n"
+                        "Please contact the system administrator.", 401)
 
 
 @app.errorhandler(404)
@@ -159,5 +160,5 @@ def run_app():
 
 
 if __name__ == '__main__':
-    app.logger.info("Restarting server")
+    app.logger.debug("Restarting server")
     run_app()

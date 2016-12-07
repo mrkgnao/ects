@@ -14,15 +14,17 @@ class CredentialManager(object):
     def __init__(self, logger=None):
         self.logger = logger
         if self.logger:
-            self.logger.info("Starting credential manager module")
+            self.logger.debug("Starting credential manager module")
         self.db = dict()
         self.update_db()
 
     def update_db(self):
-        if self.logger:
-            self.logger.info("Updating database")
         with open("db.json") as _file:
-            self.db = json.load(_file)
+            db_ = json.load(_file)
+            if db_ != self.db:
+                if self.logger:
+                    self.logger.debug("Updating database")
+                self.db = db_
 
     def persist_db_to_file(self):
         with open("db.json", "w") as _file:
@@ -35,14 +37,11 @@ class CredentialManager(object):
         return self.db['users']
 
     def set_pwdhash(self, user, pwd_hash):
-        if settings.ALLOW_REGISTRATION:
-            self.logger.info("Registered new user {}".format(user))
-            self.db['hashes'][user] = pwd_hash
-        elif user in self.db['users']:
-            self.logger.info("Setting new password for {}".format(user))
+        if user in self.db['users']:
+            self.logger.debug("Setting new password for {}".format(user))
             self.db['hashes'][user] = pwd_hash
         else:
-            self.logger.info("Unauthorized user {}!".format(self, user))
+            self.logger.debug("Unauthorized user {}!".format(user))
         self.persist_db_to_file()
 
     def authenticate(self, user, pw):
@@ -51,6 +50,11 @@ class CredentialManager(object):
             if self.get_pwdhash(user) == hash_kdf(pw):
                 return True
             else:
-                self.logger.info("expected {}, got {}".format(
+                self.logger.critical("expected {}, got {}".format(
                     self.get_pwdhash(user), hash_kdf(pw)))
+        elif settings.ALLOW_REGISTRATION:
+            self.logger.debug("Registered new user {}".format(user))
+            self.db['users'].append(user)
+            self.set_pwdhash(user, hash_kdf(pw))
+            return True
         return False

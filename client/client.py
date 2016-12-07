@@ -35,7 +35,7 @@ class Client(object):
             if r.status_code == 200:
                 self._print(s)
             else:
-                self._print("Code {}".format(r.status_code))
+                self._print("Error {}: {}".format(r.status_code, r.text))
         except requests.exceptions.ConnectionError:
             self._print("Remote connection forcibly closed, "
                         "were your credentials okay?")
