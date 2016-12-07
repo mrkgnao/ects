@@ -106,7 +106,7 @@ def upload():
 
             user_rel_upload_path = request.form.get("path")
 
-            CLASS_SEC_ROLL_RE = re.compile("(\d+)(\w)(\d+)")
+            CLASS_SEC_ROLL_RE = re.compile("^(\d+)(\w)(\d+)$")
             g = CLASS_SEC_ROLL_RE.match(uid)
             if g:
                 user_dir = pjoin(UPLOAD_DIR,
