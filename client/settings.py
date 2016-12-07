@@ -1,4 +1,4 @@
-SERVER_IP = "localhost"
+SERVER_IP = "127.0.0.1"
 SERVER_PORT = "8080"
 SERVER_URL = "http://" + SERVER_IP + ":" + SERVER_PORT
 SERVER_UPLOAD_SUFFIX = "/upload"

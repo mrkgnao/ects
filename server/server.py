@@ -1,17 +1,16 @@
 #!/usr/bin/env python
-from flask import Flask, request, Response, g
-
+import logging
 import os
 import os.path
-from os.path import join as pjoin
-from functools import wraps
+import re
 import time
+from functools import wraps
+from os.path import join as pjoin
+
+from flask import Flask, Response, g, request
 
 import credentials as cred
-
 import settings
-
-import logging
 from custom_logging import Logging
 
 app = Flask(__name__)
@@ -24,7 +23,8 @@ app.logger.setLevel(logging.DEBUG)
 
 app.logger.handlers = []
 logger = Logging(app)
-UPLOAD_DIR = pjoin(os.getcwd(), "uploads")
+
+UPLOAD_DIR = os.getcwd() + settings.SERVER_UPLOAD_SUFFIX
 app.config['FLASK_LOG_LEVEL'] = 'DEBUG'
 
 credential_manager = cred.CredentialManager(logger=app.logger)
@@ -101,8 +101,18 @@ def upload():
         # get the 'upload_file' field from the form
         upload_file = request.files.get(settings.FILE_UPLOAD_FIELD_NAME)
         if upload_file is not None:
+            def rel(_path):
+                return os.path.relpath(_path, os.getcwd())
+
             user_rel_upload_path = request.form.get("path")
-            user_dir = pjoin(UPLOAD_DIR, uid)
+
+            CLASS_SEC_ROLL_RE = re.compile("(\d+)(\w)(\d+)")
+            g = CLASS_SEC_ROLL_RE.match(uid)
+            if g:
+                user_dir = pjoin(UPLOAD_DIR,
+                                 g.group(1), g.group(2), g.group(3))
+            else:
+                user_dir = pjoin(UPLOAD_DIR, uid)
 
             source_file = upload_file.filename
             source_fname, source_fext = os.path.splitext(upload_file.filename)
@@ -111,23 +121,19 @@ def upload():
             app.logger.debug("Received file {}".format(source_file))
 
             if not os.path.isdir(user_dir):
-                app.logger.warn("Created dir /uploads/{0} for user {0}".format(
-                    uid))
-                os.mkdir(user_dir)
+                app.logger.warn("Created dir {} for user {}".format(rel(user_dir), uid))
+                os.makedirs(user_dir)
 
             save_dir = pjoin(user_dir, user_rel_upload_path, source_file)
 
             if not os.path.isdir(save_dir):
-                app.logger.debug("Created /uploads/{}".format(
-                    pjoin(uid, user_rel_upload_path)))
+                app.logger.debug("Created {}".format(rel(save_dir)))
                 os.makedirs(save_dir)
 
             save_path = pjoin(save_dir, target_fname)
             if not os.path.exists(save_path):
                 upload_file.save(save_path)
-                app.logger.debug("Saved to /uploads/{}".format(
-                    pjoin(uid, user_rel_upload_path, source_file,
-                          target_fname)))
+                app.logger.debug("Saved to {}".format(rel(save_path)))
             else:
                 app.logger.debug("File md5 hasn't changed, skipping")
 

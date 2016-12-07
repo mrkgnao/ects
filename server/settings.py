@@ -1,5 +1,8 @@
+import datetime
+from os.path import join as pjoin
+
 SERVER_URL           = "http://localhost:8080"
-SERVER_UPLOAD_SUFFIX = "/upload"
+SERVER_UPLOAD_SUFFIX = pjoin("/upload", str(datetime.datetime.now().year))
 SERVER_UPLOAD_URL    = SERVER_URL + SERVER_UPLOAD_SUFFIX
 
 FILE_UPLOAD_FIELD_NAME = "upload_file"

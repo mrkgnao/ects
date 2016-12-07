@@ -1,11 +1,14 @@
 #!/usr/bin/env python
-import requests
-import os
-import settings
-import sys
 import hashlib
+import os
 import os.path
+import sys
+import time
 from os.path import join as pjoin
+
+import requests
+
+import settings
 
 
 class Client(object):
@@ -26,6 +29,7 @@ class Client(object):
         headers = {'Content-MD5': md5_hash}
 
         try:
+            t = time.clock()
             r = requests.post(
                 self.upload_url,
                 headers=headers,
@@ -70,15 +74,18 @@ class Client(object):
                         pjoin(_fname, rpath), s)
 
     def _print(self, s):
-        self.parent_dialog.set_info_label(s)
+        if self.parent_dialog:
+            self.parent_dialog.set_info_label(s)
 
     def _set_pb_max(self, amt):
-        self.parent_dialog.set_progressbar_max(amt)
+        if self.parent_dialog:
+            self.parent_dialog.set_progressbar_max(amt)
 
     def _set_pb_amt(self, amt):
-        self.parent_dialog.set_progressbar_amt(amt)
+        if self.parent_dialog:
+            self.parent_dialog.set_progressbar_amt(amt)
 
 
 if __name__ == '__main__':
-    client = Client()
+    client = Client(uid="12B20", pwd="kek", parent_dialog=None)
     client.mirror_dir_to_server(sys.argv[1])
