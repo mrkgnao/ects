@@ -3,6 +3,7 @@ import logging
 import os
 import platform
 from datetime import datetime
+import settings
 
 from flask import request
 from coloredlogs import ColoredFormatter
@@ -15,23 +16,73 @@ LOG_FORMAT = LOG_FORMAT_PRE + " " + LOG_FORMAT_POST
 
 LEVEL_STYLES = {
     'debug': {},
-    'critical': {'color': 'red', 'bold': True},
-    'error': {'color': 'red'},
-    'info': {'color': 'blue'},
-    'warn': {'color': 'yellow'}}
+    'critical': {
+        'color': 'red',
+        'bold': True
+    },
+    'error': {
+        'color': 'red'
+    },
+    'info': {
+        'color': 'blue'
+    },
+    'warn': {
+        'color': 'yellow'
+    }
+}
 
 FIELD_STYLES = {
-    'hostname': {'color': 'cyan'},
-    'programname': {'color': 'cyan'},
-    'name': {'color': 'blue'},
-    'levelname': {'color': 'black', 'bold': True},
-    'asctime': {'color': 'green'},
-    'threadname': {'color': 'magenta'}}
+    'hostname': {
+        'color': 'cyan'
+    },
+    'programname': {
+        'color': 'cyan'
+    },
+    'name': {
+        'color': 'blue'
+    },
+    'levelname': {
+        'color': 'black',
+        'bold': True
+    },
+    'asctime': {
+        'color': 'green'
+    },
+    'threadname': {
+        'color': 'magenta'
+    }
+}
 
-formatter = ColoredFormatter(fmt=LOG_FORMAT,
-    datefmt=DATE_FORMAT,
-    level_styles=LEVEL_STYLES,
-    field_styles=FIELD_STYLES)
+LEVEL_STYLES_PLAIN = {
+    'debug': {},
+    'critical': {},
+    'error': {},
+    'info': {},
+    'warn': {}
+}
+
+FIELD_STYLES_PLAIN = {
+    'hostname': {},
+    'programname': {},
+    'name': {},
+    'levelname': {},
+    'asctime': {},
+    'threadname': {}
+}
+
+if settings.SHOW_COLORED_LOGS:
+    formatter = ColoredFormatter(
+        fmt=LOG_FORMAT,
+        datefmt=DATE_FORMAT,
+        level_styles=LEVEL_STYLES,
+        field_styles=FIELD_STYLES)
+else:
+    formatter = ColoredFormatter(
+        fmt=LOG_FORMAT,
+        datefmt=DATE_FORMAT,
+        level_styles=LEVEL_STYLES_PLAIN,
+        field_styles=FIELD_STYLES_PLAIN)
+
 
 class Logging(object):
     """Configure flask logging with nice formatting and syslog support."""
@@ -60,9 +111,8 @@ class Logging(object):
         if config_log_level:
             config_log_int = getattr(logging, config_log_level.upper(), None)
             if not isinstance(config_log_int, int):
-                raise ValueError(
-                    'Invalid log level: {0}'.format(config_log_level)
-                )
+                raise ValueError('Invalid log level: {0}'.format(
+                    config_log_level))
             set_level = config_log_int
 
         # Set to NotSet if we still aren't set yet
@@ -89,6 +139,7 @@ class Logging(object):
         root_logger = logging.getLogger()
         for handler in root_logger.handlers:
             handler.setFormatter(log_formatter)
+
 
 class ContextualFilter(logging.Filter):
     def filter(self, log_record):
