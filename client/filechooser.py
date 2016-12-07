@@ -8,12 +8,21 @@ from client import Client
 import settings
 
 
-class FileChooserDialog(object):
-    def __init__(self):
-        self.root = Tk()
+class FileChooserDialog(Tk):
+    def __init__(self, parent=None):
+        if parent:
+            Tk.__init__(self, parent)
+            self.parent = parent
+        else:
+            Tk.__init__(self)
+
         self.upload_folder = ""
         self.username = ""
         self.password = ""
+
+        self.grid()
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
     def open_file(self):
         try:
@@ -67,50 +76,50 @@ class FileChooserDialog(object):
             self.client_thread.start()
 
     def run_dialog(self):
-        self.root.title("Writing GUIs is hard, okay?")
-        self.root.geometry("500x250")
+        self.title("Writing GUIs is hard, okay?")
+        # self.geometry("500x250")
 
-        server_ip_text = Label(self.root, text="Server IP")
-        self.server_ip_input = Entry(self.root)
+        server_ip_text = Label(self, text="Server IP", anchor="e")
+        self.server_ip_input = Entry(self)
         self.server_ip_input.insert(END, settings.SERVER_IP)
 
-        server_port_text = Label(self.root, text="Port")
-        self.server_port_input = Entry(self.root)
+        server_ip_text.grid(column=0, row=0)
+        self.server_ip_input.grid(column=1, row=0)
+
+        server_port_text = Label(self, text="Port", anchor="e")
+        self.server_port_input = Entry(self)
         self.server_port_input.insert(END, settings.SERVER_PORT)
 
-        # Creating the username & password entry boxes
-        username_text = Label(self.root, text="Username")
-        self.username_input = Entry(self.root)
-        password_text = Label(self.root, text="Password")
-        self.password_input = Entry(self.root, show="*")
+        server_port_text.grid(column=0, row=1)
+        self.server_port_input.grid(column=1, row=1)
 
-        self.info_label = Label(self.root, text="")
+        # Creating the username & password entry boxes
+        username_text = Label(self, text="Username", anchor="e")
+        self.username_input = Entry(self)
+
+        username_text.grid(column=0, row=2)
+        self.username_input.grid(column=1, row=2)
+
+        password_text = Label(self, text="Password", anchor="e")
+        self.password_input = Entry(self, show="*")
+        password_text.grid(column=0, row=3)
+        self.password_input.grid(column=1, row=3)
 
         upload_folder_btn = Button(
             text="Upload folder", command=self.quit_dialog)
         choose_file_btn = Button(
-            text="Choose folder to upload", command=self.open_file)
+            text="Choose folder", command=self.open_file)
+        upload_folder_btn.grid(column=1, row=4)
+        choose_file_btn.grid(column=0, row=4)
 
         self.progressbar = Progressbar(
-            self.root, orient='horizontal', mode='determinate')
+            self, orient='horizontal', mode='determinate')
+        self.progressbar.grid(column=0, row=5, columnspan=2)
 
-        server_ip_text.pack()
-        self.server_ip_input.pack()
+        self.info_label = Label(self, text="", anchor="e")
+        self.info_label.grid(column=0, row=6, columnspan=2)
 
-        server_port_text.pack()
-        self.server_port_input.pack()
-
-        username_text.pack()
-        self.username_input.pack()
-        password_text.pack()
-        self.password_input.pack()
-        upload_folder_btn.pack()
-        choose_file_btn.pack()
-
-        self.progressbar.pack()
-        self.info_label.pack()
-
-        self.root.mainloop()
+        self.mainloop()
 
         return {
             "username": self.username,

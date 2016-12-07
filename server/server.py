@@ -93,10 +93,10 @@ def home():
 
 @app.route('/upload', methods=['POST'])
 def upload():
-    # get the 'upload_file' field from the form
     uid, pwd = get_basic_auth_creds()
 
     if check_auth(uid, pwd):
+        # get the 'upload_file' field from the form
         upload_file = request.files.get(settings.FILE_UPLOAD_FIELD_NAME)
         if upload_file is not None:
             user_rel_upload_path = request.form.get("path")
